@@ -1,0 +1,9 @@
+node_modules
+.ccache
+/*.sh
+other
+versions
+out
+release
+bridge/__pycache__/
+.DS_Store

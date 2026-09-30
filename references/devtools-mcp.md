@@ -1,10 +1,10 @@
 # 浏览器 DevTools MCP 调试手册
 
-本文面向需要调试 userscript 真实页面行为的任务，重点覆盖 Chromium 系列浏览器（Chrome、Edge）与 chrome-devtools-mcp。命令以 2026-09-22 本机核对的 chrome-devtools-mcp 1.9.0 为基线；版本、参数和工具集合会变化，开始任务时仍要重新执行 --version 和 --help。
+本文面向需要调试 userscript 真实页面行为的任务，当前默认目标是 Edge；同时覆盖 Chromium 系列浏览器与 chrome-devtools-mcp。命令以 2026-09-22 本机核对的 chrome-devtools-mcp 1.9.0 为基线；版本、参数和工具集合会变化，开始任务时仍要重新执行 --version 和 --help。Edge 的实际 MCP 注册名、连接参数和页面控制扩展以当前环境为准，不写死为某个本地配置名。
 
-## 1. 两类 MCP 的职责边界
+## 1. DevTools MCP 与 userscript bridge 的职责边界
 
-| 目标 | Tampermonkey MCP | 浏览器 DevTools MCP |
+| 目标 | 自有 Userscript Bridge | 浏览器 DevTools MCP |
 | --- | --- | --- |
 | 读取、备份和写入 userscript | 负责 | 不负责 |
 | 检查脚本 metadata 和版本 | 读取脚本后负责 | 只能从页面侧观察结果 |
@@ -14,7 +14,7 @@
 | JS 断点、单步、条件断点 | 不负责 | 当前没有直接通用命令 |
 | Coverage、Layers、完整 Service Worker 面板 | 不负责 | 当前没有完整面板控制 |
 
-两者不共享连接、权限或状态。DevTools MCP 能看到页面，并不代表它能修改已安装脚本；Tampermonkey MCP 能写脚本，也不代表写入后的页面已真实验证。
+两者不共享连接、权限或状态。DevTools MCP 能看到页面，并不代表它能修改已安装脚本；自有 bridge 能写脚本，也不代表写入后的页面已真实验证。官方 Tampermonkey MCP 和官方 Editors 不属于本调试流程。
 
 ## 2. 连接前能力核对
 
@@ -43,7 +43,7 @@ chrome-devtools CLI 通常会在第一次实际调用时启动后台服务；不
 - Edge 常见入口：`edge://inspect/#remote-debugging`。
 - 企业策略、浏览器版本和实际页面可能不同；如果浏览器显示安全确认或策略限制，必须由用户确认或管理员放行，代理不得绕过。
 
-如果任务要验证 userscript，用户还需要安装并启用目标 profile 中的 Tampermonkey；若要让 Tampermonkey MCP 读取/写入已安装脚本，再按需安装或启用 Tampermonkey Editors 的连接能力。安装形态可能是 Tampermonkey 内部入口或配套组件，不能把扩展 ID 写死，也不能把 Chrome 的安装状态推断为 Edge 已安装。
+如果任务要验证 userscript，用户还需要安装并启用目标 profile 中的 Tampermonkey；若要读取/写入已安装脚本，再按需使用自有 Userscript Bridge。扩展 ID 必须动态发现，不能把一个浏览器的安装状态推断为另一个浏览器已安装。
 
 chrome-devtools-mcp 1.9.0 还提供可选的扩展工具，但必须显式启用并受连接模式限制：
 
@@ -336,7 +336,7 @@ list_pages 在支持的版本中可以返回扩展或 Service Worker 页面；ev
 4. 刷新或关闭隔离页恢复页面。
 5. 分别报告“本地文件已修改”“临时注入已验证”“Tampermonkey 已写入”三种状态。
 
-DevTools MCP 不授权修改 Tampermonkey；任何已安装脚本写入仍遵循 mcp-workflow.md 的用户明确授权、备份、差异和乐观锁流程。
+DevTools MCP 不授权修改 Tampermonkey；任何已安装脚本写入仍遵循 `mcp-workflow.md` 的自有 bridge、用户明确授权、备份、差异和乐观锁流程。
 
 ## 15. Userscript 调试记录模板
 

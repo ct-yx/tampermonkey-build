@@ -18,7 +18,6 @@
 - Violentmonkey GM API：https://violentmonkey.github.io/api/gm/
 - Violentmonkey metadata：https://violentmonkey.github.io/api/metadata-block/
 - `@types/tampermonkey`：npm 最新版本以 `npm view @types/tampermonkey version` 实时核对。
-- `Tampermonkey/tampermonkey-mcp`：https://github.com/Tampermonkey/tampermonkey-mcp
 - Greasy Fork MCP：https://github.com/yigitkonur/mcp-greasyfork-scripts
 
 “最新”“官方支持”“兼容”都是易变化事实。交付前重新读取页面或包元数据，记录核对日期和实际版本；不要只相信用户粘贴表格、README 镜像或搜索摘要。

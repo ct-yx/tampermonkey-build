@@ -5,13 +5,13 @@
 ## 调试顺序
 
 1. 确认脚本 metadata 匹配当前 URL，读取 `GM_info` 或脚本面板确认版本。
-2. 优先在 Codex 内置浏览器中自动完成加载、刷新、滚动、悬停、SPA 导航、回退和再次进入，先固定用户可见症状。
+2. 在 Edge 中通过页面控制扩展和 Tampermonkey 完成真实加载、刷新、滚动、悬停、SPA 导航、回退和再次进入；同时可用 Codex 内置浏览器观察 DOM、快照和可见布局。
 3. 在 Console 记录脚本初始化标记、错误和关键统计对象。
 4. 在 Elements/DOM 中确认目标节点、父子关系、Shadow DOM、iframe 和页面重绘来源。
 5. 在 Network 中确认请求 URL、优先级、状态、重定向、缓存、响应时间和失败节点。
 6. 用 Performance/Performance Insights 录制用户实际操作，检查长任务、布局抖动、重复请求和 CLS。
 
-内置浏览器的自主回归不能依赖用户每轮连接 Tampermonkey Editors。已有桥接就复用，未连接就继续本地文件、临时注入或隔离页面验证；只有需要确认已安装脚本内容或执行已授权同步时，才调用 Tampermonkey MCP。
+Edge 的真实回归不能依赖用户每轮输入连接码或打开编辑器。已有自有 Userscript Bridge 就复用，bridge 不可用就继续本地文件、Edge 手动/DevTools 验证和内置浏览器 DOM 观察；只有需要确认已安装脚本内容或执行已授权同步时，才调用自有 bridge CLI。
 
 ## Chrome/Edge
 
@@ -19,9 +19,9 @@ Chromium DevTools MCP 可用于列页面、取 snapshot、evaluate、读取 cons
 
 常用能力对照：
 
-| 调试证据 | Codex 内置浏览器 | DevTools MCP | 仍需真实 DevTools/专用 CDP |
+| 调试证据 | Codex 内置浏览器 | Edge DevTools MCP | 仍需真实 DevTools/专用 CDP |
 | --- | --- | --- | --- |
-| 页面打开、选择标签页、UI 操作 | 主要工具 | 按版本支持 | - |
+| 页面打开、选择标签页、UI 操作 | DOM/视觉观察 | Edge 页面控制扩展/按版本支持 | - |
 | 截图和可见结果 | 主要工具 | 支持 | - |
 | 页面列表、快照、页面侧采样 | 不默认提供完整接口 | 支持 | - |
 | Console 和 Network 列表 | 不默认保证 | 支持 | - |
@@ -31,9 +31,9 @@ Chromium DevTools MCP 可用于列页面、取 snapshot、evaluate、读取 cons
 | JS 断点、条件断点、单步 | 不默认提供 | 不直接支持 | 支持 |
 | HAR、Coverage、Layers | 不默认提供 | 不提供完整直接接口 | 支持 |
 | Service Worker Application 面板 | 不默认提供 | 仅部分页面/脚本能力 | 支持 |
-| userscript 读取/写入 | 不负责 | 不负责 | Tampermonkey MCP |
+| userscript 读取/写入 | 不负责 | 不负责 | 自有 Userscript Bridge CLI |
 
-内置浏览器适合验证“用户看到了什么、操作能否完成、问题是否能稳定复现”。它不自动继承 Edge 的 Tampermonkey、登录态、扩展、缓存和 F12 状态；需要真实 userscript、CDN、Console 或网络证据时，必须切换到目标 Edge/Chrome 的 DevTools MCP。详细的上下文选择、临时注入和记录模板见 [browser-runtime.md](browser-runtime.md)。
+Codex 内置浏览器适合观察“页面结构、用户看到了什么、布局是否稳定”；真实 userscript、扩展、CDN、Console 或网络证据必须切换到 Edge。它不自动继承 Edge 的 Tampermonkey、登录态、扩展、缓存和 F12 状态。详细的上下文选择、临时注入和记录模板见 [browser-runtime.md](browser-runtime.md)。
 
 推荐最短路径：
 
@@ -48,7 +48,7 @@ Chromium DevTools MCP 可用于列页面、取 snapshot、evaluate、读取 cons
 
 `take_snapshot`、`evaluate_script` 和截图不能互相替代：快照用于结构/UID，evaluate 用于可复现页面采样，截图只用于可见结果核对。
 
-内置浏览器的截图和交互结果也不能替代 `take_snapshot`、`evaluate_script` 或 Network/Performance 证据。对于闪烁、信息流缺失、CDN 慢和布局抖动，应先用内置浏览器复现可见症状，再用 DevTools MCP 确定 DOM、请求和性能原因。
+内置浏览器的截图和交互结果也不能替代 `take_snapshot`、`evaluate_script` 或 Edge Network/Performance 证据。对于闪烁、信息流缺失、CDN 慢和布局抖动，可先用内置浏览器固定可见症状，再用 Edge DevTools MCP 确定真实 DOM、请求和性能原因。
 
 可以临时注入本地构建产物进行隔离验证，但临时注入不是安装和发布：
 

@@ -1,8 +1,8 @@
 interface:
   display_name: "Tampermonkey Build"
-  short_description: "分离 userscript 开发、调试、发布与下载流程"
+  short_description: "用 Edge 开发 userscript，内置浏览器观察 DOM"
   brand_color: "#2563EB"
-  default_prompt: "使用 $tampermonkey-build：先明确是开发、下载/导入、发布、已安装脚本同步还是迁移模式；开发默认在本地文件和 Codex 内置浏览器中完成，发布只处理已验证产物，下载只审查并保存来源。初始化时按需检查 CDT/CDP、Tampermonkey 和 Editors；Tampermonkey MCP 只使用单个持久连接，最多握手一次，且仅在明确授权时同步已安装脚本。"
+  default_prompt: "使用 $tampermonkey-build：以 Edge 完成 userscript 的真实开发、调试和回归，用 Codex 内置浏览器补充 DOM/快照/截图观察，需要已安装脚本同步时使用自有 Userscript Bridge CLI；不安装或连接官方 Tampermonkey MCP/Editors，写入前明确授权。"
 
 policy:
   allow_implicit_invocation: true
