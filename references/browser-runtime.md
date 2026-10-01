@@ -13,11 +13,11 @@
 - 通过截图、可见文本和交互结果确认闪烁、错位、抖动、空白或加载顺序；
 - 在隔离的浏览器上下文中观察临时测试的用户可见效果。
 
-真实开发与运行以 Edge 为准：Edge 页面控制扩展负责交互，Edge DevTools/CDP 负责深层页面证据，Tampermonkey 和自有 Userscript Bridge 负责真实脚本链路。Codex 内置浏览器只补充 DOM、快照、截图和布局观察。
+userscript 的真实运行与行为验证以 Edge + Tampermonkey 为准。页面操作使用当前可用的浏览器 UI 或自动化能力；DevTools/CDP 只在需要深层页面证据时启用。自有 Userscript Bridge 只用于用户要求的已安装脚本同步。Codex 内置浏览器按需补充 DOM、快照、截图和布局观察。
 
 ## 1.1 自主测试契约
 
-内置浏览器的页面观察应尽量由代理连续完成：复用/创建标签页、导航、截图、快照、滚动、悬停和关键交互不应要求用户逐轮点击。开发时以本地文件为事实来源；真实脚本、扩展和 Tampermonkey 同步在 Edge 完成，细节见 `mcp-workflow.md` 与 `editors-native-bridge.md`。
+内置浏览器的页面观察应尽量由代理连续完成：复用/创建标签页、导航、截图、快照、滚动、悬停和关键交互不应要求用户逐轮点击。开发时以本地 userscript 文件为唯一事实来源；真实 userscript 在 Edge + Tampermonkey 验证。扩展迁移仅在用户明确要求时进行，细节见 `userscript-to-extension.md`。
 
 真实 Edge/Chrome 页面取证前还需要用户解锁目标浏览器的 CDT/CDP 远程调试权限；内置浏览器自身不代表已经取得用户 Edge 的 CDP 权限。Tampermonkey 安装、自有 bridge 状态和 CDP 权限都必须按当前 profile 分开记录。
 
@@ -63,16 +63,16 @@
 
 | 工作 | Codex 内置浏览器 | Edge/Chrome DevTools MCP | 自有 Userscript Bridge |
 | --- | --- | --- | --- |
-| 打开页面和选择标签页 | 补充观察 | Edge 页面控制扩展/按版本支持 | 不负责 |
-| 点击、输入、滚动、悬停 | 补充观察 | Edge 页面控制扩展 | 不负责 |
-| 截图和可见结果 | 主要工具 | Edge 页面控制扩展/DevTools | 不负责 |
+| 打开页面和选择标签页 | 页面观察 | 按当前 Edge 浏览器 UI/可用自动化方式 | 不负责 |
+| 点击、输入、滚动、悬停 | 可见页面回归 | 按当前 Edge 浏览器 UI/可用自动化方式 | 不负责 |
+| 截图和可见结果 | 主要工具 | Edge 页面或 DevTools 按需 | 不负责 |
 | DOM 快照和页面侧采样 | 主要工具 | Edge DevTools MCP | 不负责 |
 | Console、Network、Performance | 不默认保证 | Edge DevTools MCP | 不负责 |
 | 断点、Coverage、Layers、Service Worker 面板 | 不默认提供 | 复杂场景用真实 DevTools 或专用 CDP 工具 | 不负责 |
 | 读取、备份和写入 userscript | 不负责 | 不负责 | 仅在用户要求且获授权时使用 |
-| 真实 Edge + 已安装管理器验证 | 不保证 | 负责页面证据 | 提供脚本同步，不代替页面验证 |
+| 真实 Edge + Tampermonkey 验证 | 不保证 | 按需提供页面证据 | 用户要求同步时提供脚本同步，不代替页面验证 |
 
-三者可以并行使用，但连接、权限、Cookie、页面 ID 和脚本状态不共享。内置浏览器只作结构/可见观察；Edge 才作真实 userscript 和扩展回归。一个工具成功不能替另一个工具作出结论。
+三者可以并行使用，但连接、权限、Cookie、页面 ID 和脚本状态不共享。内置浏览器只作结构/可见观察；Edge + Tampermonkey 才作真实 userscript 回归。扩展验证仅属于用户明确要求的迁移流程，一个工具成功不能替另一个工具作出结论。
 
 ## 4. 面向 userscript 的标准流程
 
@@ -85,14 +85,13 @@
 
 内置浏览器适合回答“页面结构是什么、用户看到了什么、布局是否抖动”。它不能单独回答“哪个 userscript 是否实际运行”“哪个请求慢”“哪个脚本抛错”或“该节点是否来自某个 CDN”；这些结论回到 Edge。
 
-### B. 在 Edge 完成真实开发回归
+### B. 在 Edge + Tampermonkey 完成真实 userscript 回归
 
-1. 通过 Edge 页面控制扩展连接目标标签页并执行刷新、滚动、悬停和 SPA 操作。
-2. 确认 Edge profile 的 Tampermonkey 正在运行本地脚本。
-3. 通过自有 Userscript Bridge CLI 读取/写入已安装脚本（仅在用户要求并授权时）。
-4. 通过 Edge DevTools MCP 或真实 F12 取得 Console、Network 和 Performance 证据。
+1. 在目标 Edge profile 打开目标页面，用当前可用的浏览器 UI 或自动化能力执行刷新、滚动、悬停和 SPA 操作。
+2. 确认 Tampermonkey 正在运行本次开发的 userscript，并验证用户路径。
+3. 通过 Edge DevTools MCP 或真实 F12 取得 Console、Network 和 Performance 证据（仅在问题需要时）。
 
-### C. 再用 Edge DevTools MCP 获取证据
+### C. 按需用 Edge DevTools MCP 获取证据
 
 在需要确定原因时切换到真实 Edge 的 DevTools MCP：
 
@@ -106,7 +105,7 @@
 
 具体工具名和参数以 devtools-mcp.md 及运行时帮助为准。先做无副作用页面检查，再做 DOM、Console、Network 和性能采样。
 
-### C. 可选地同步已安装脚本
+### D. 可选地同步已安装脚本
 
 本地文件是源码事实来源。自有 Userscript Bridge 只在用户要求管理已安装脚本并明确授权后用于读取、备份、生成差异和写入；它不是内置浏览器回归的前置条件：
 

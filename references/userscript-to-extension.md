@@ -1,6 +1,6 @@
 # Tampermonkey 脚本迁移到 Edge/Chrome 扩展
 
-本文指导把用户提供的本地 `.user.js` 迁移为 Edge 和 Chrome Manifest V3 扩展。迁移由 AI 按原脚本逐项分析和改写；不增加独立 CLI，也不要求访问任何已安装脚本桥接。
+本文是独立的可选迁移流程：只有用户明确要求把 userscript 迁移为 Edge/Chrome 扩展时才启用。它不改变本技能的 userscript 开发、测试和发布默认流程，也不要求访问任何已安装脚本桥接。迁移前应先完成 userscript 功能和 Edge + Tampermonkey 验证；扩展仅作为适配目标，不维护第二套业务逻辑。
 
 ## 目标和输出
 

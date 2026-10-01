@@ -8,24 +8,25 @@
 | 下载/导入 | URL、仓库、版本或文件 | 审查副本和来源记录 | 不自动执行、安装或覆盖源码 |
 | 已安装同步 | 已确认的脚本目标 | 备份、差异、回读和页面复测 | 不把同步结果直接当发布产物 |
 | 迁移 | 本地 `.user.js` | MV3 扩展目录、ZIP、迁移报告 | 不自动安装或发布商店 |
-| 发布 | 已验证的本地产物 | 可分发文件或外部发布结果 | 不把未验证下载内容直接推送 |
+| 发布 | 已验证的 userscript 源码 | 根目录 `.user.js` 或其他明确的 userscript 发布文件 | 不把未验证下载内容直接推送 |
 
 ## 开发
 
-本地文件通常是源码事实来源。当前真实开发与 userscript 运行环境为 Edge；Codex 内置浏览器只补充 DOM/快照/截图和可见布局观察。根据改动风险选择检查：
+本地 userscript 源码是唯一开发基准。默认流程为：
 
 ```text
-读取项目和 metadata
-→ 本地编辑
-→ 适合当前改动的静态检查
-→ Edge 页面控制扩展 + Tampermonkey 真实回归
-→ Edge DevTools 取 Console/Network/Performance 证据
-→ 需要时用内置浏览器补充 DOM/快照/截图观察
+本地 userscript 源码
+→ metadata 检查
+→ node --check
+→ userscript 专用测试
+→ Edge + Tampermonkey 实测
+→ 必要时用 Codex 内置浏览器观察 DOM 和布局
+→ 从源码生成项目根目录发布 .user.js
 ```
 
-小型语法或 metadata 改动可能只需要验证器和 `node --check`；DOM/交互改动适合增加页面回归；CDN、图片、视频、信息流或预加载改动应使用同口径 Network/性能数据。不要为了完成固定清单而采集与问题无关的面板。
+测试和页面观察深度根据改动选择，但面向用户的行为改动应使用 Edge + Tampermonkey 做真实脚本验证。DevTools 的 Console/Network/Performance 和 Codex 内置浏览器只在问题需要时补充证据；页面操作由当前可用方式完成，不要求预装某个控制扩展或 MCP。
 
-开发默认不写入 Tampermonkey。若用户明确希望直接测试已安装脚本，可以切换到已安装同步，或在 Edge 使用临时/隔离注入，并说明两者不是同一个运行环境。不要把自有扩展加载到 Codex 内置浏览器；该路径等待官方修复宿主崩溃后再评估。
+单文件脚本可直接以项目根目录的 `.user.js` 作为源码和发布文件。多模块项目从源码构建根目录发布 `.user.js`，不要手动改生成物。需要 Raw 地址更新的脚本必须保持有效的 `@updateURL` 与 `@downloadURL`。开发过程中不默认同步/覆盖用户已安装版本；若用户明确要求测试已安装脚本，按“已安装脚本同步”单独备份、展示差异并授权写入。
 
 ## 下载/导入
 
@@ -57,25 +58,24 @@ sha256
 
 连接、动态 ID 和单实例问题见 [mcp-workflow.md](mcp-workflow.md) 与 [editors-native-bridge.md](editors-native-bridge.md)。自有 bridge 不可用时交付本地差异即可，不要声称已同步。
 
-## 迁移
+## 可选扩展迁移
 
-对本地 `.user.js` 做源码级盘点：metadata、匹配范围、实际使用的 GM API、页面世界、网络请求、远程依赖、存储和生命周期。按实际需要生成 content script、service worker、页面世界辅助代码和权限。
+只有用户明确要求把 userscript 迁移为 Edge/Chrome 扩展时，才执行 [userscript-to-extension.md](userscript-to-extension.md)。先完成 userscript 功能和 Edge + Tampermonkey 验证，再分析能力差异并按需生成扩展适配。扩展不另存一套业务逻辑；Manifest、权限、MAIN/ISOLATED world、Bridge、Service Worker 和下载能力另行检查。
 
-纯 DOM 脚本可以直接迁移；使用 Tampermonkey 特有能力或存在无法等价转换的行为时，生成待修复骨架与 `MIGRATION_REPORT.md`，明确缺失行为和后续方案，不把骨架标为可用扩展。成功包仍应通过 manifest、脚本语法、ZIP 内容和目标浏览器加载检查。
+扩展构建或加载结果与 userscript 实测分开报告；扩展构建通过不代表 Edge + Tampermonkey userscript 实测通过。不要自动安装扩展或修改 Tampermonkey。
 
 ## 发布
 
-发布只处理已完成必要验证的本地产物。建议使用干净 staging：
+userscript 发布只处理已完成必要验证的本地产物。对需要 Raw 更新的项目，编译后的 `.user.js` 保留在仓库根目录。构建产物必须从源码生成，不能手动编辑。建议 staging 只放本次 userscript 发布所需文件：
 
 ```text
 staging/
 ├── script.user.js
-├── extension/
 ├── SHA256SUMS
 └── RELEASE_NOTES.md
 ```
 
-检查与当前发布目标相关的项目：版本号、metadata、权限、更新/下载地址、许可证和第三方归属、绝对路径、bridge 令牌、调试开关、临时 URL、密钥、用户数据和测试日志。ZIP 只包含计划分发的文件，并能复现校验摘要。
+发布前运行 metadata 检查、`node --check`、项目测试和 `git diff --check`。检查版本号、`@match`/`@grant`/`@connect`、有效的 `@updateURL`/`@downloadURL`、许可证和第三方归属、绝对路径、bridge 令牌、调试开关、临时 URL、密钥、用户数据和测试日志。ZIP 只包含计划分发的 userscript 文件，并能复现校验摘要。
 
 推送 GitHub、Greasy Fork 或其他外部平台属于外部状态变更，需要用户明确提出目标和上传内容后再执行。执行后报告远端、分支、提交和发布状态；没有执行就不要暗示已发布。
 
