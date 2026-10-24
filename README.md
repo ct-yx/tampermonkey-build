@@ -31,6 +31,7 @@
 - [userscript 架构、页面作用域和生命周期](references/architecture-and-lifecycle.md)
 - [Codex 内置浏览器](references/browser-runtime.md)
 - [浏览器 DevTools MCP](references/devtools-mcp.md)
+- [可选 JS 逆向/运行时深度调试](references/js-reverse-mcp.md)
 - [桥接与工具工作流](references/mcp-workflow.md)
 - [自有 Userscript Bridge](references/editors-native-bridge.md)
 - [Edge 桥接扩展包与源码](assets/edge-userscript-bridge/README.md)

@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | Edge 页面操作能力 | 在真实 Edge 中导航、交互、刷新和回归 | 按需使用；不要求为 userscript 开发安装特定扩展 |
 | Edge DevTools MCP | 真实 Edge 的 DOM、Console、Network、Performance、Memory 取证 | 按问题启用 |
+| 可选 `js-reverse-mcp` | 加载脚本检索、源码保存、运行时断点、调用栈、单步、XHR/Fetch 和 WebSocket 分析 | 仅用户明确需要 JS 逆向时启用 |
 | Codex 内置浏览器 | DOM、快照、截图和可见布局观察 | 补充使用，不加载自有扩展 |
 | Greasy Fork MCP 或网页检索 | 公开脚本和资料发现 | 按需启用 |
 | 自有 Userscript Bridge 扩展 + 本地 host/CLI | 读取、备份、差异比较和授权写入已安装脚本 | 仅已安装同步需要 |
@@ -20,8 +21,9 @@
 
 1. 开发任务先检查本地源码、`validate_userscript.py`、Node 和 Edge 中的 Tampermonkey。只有需要代理自动操作页面时，才检查现有页面控制工具；缺少该工具不阻止本地开发或通过浏览器 UI 实测。
 2. 需要真实 Edge 页面证据时，再检查 DevTools MCP、CDT/CDP 权限和目标页面；内置浏览器可同时用于 DOM/截图观察。
-3. 需要公开脚本检索时，再启用 Greasy Fork MCP 或使用网页检索。
-4. 需要管理已安装脚本时，再检查自有 bridge 扩展、Native Messaging host 和 CLI 状态。
+3. 只有用户明确需要混淆代码、运行时断点、调用栈、单步或 WebSocket 深度分析时，才检查 `js-reverse-mcp`；一般页面和性能调试不需要它。
+4. 需要公开脚本检索时，再启用 Greasy Fork MCP 或使用网页检索。
+5. 需要管理已安装脚本时，再检查自有 bridge 扩展、Native Messaging host 和 CLI 状态。
 
 MCP 文件和配置若确有需要，放在 Codex 全局目录 `~/.codex/mcp/`，不能写进项目目录。已存在的 DevTools/Greasy Fork 服务只复用，不重复注册。官方 Tampermonkey MCP 不得安装或注册；官方 Editors 不得作为本技能的安装目标。
 
@@ -100,12 +102,37 @@ DevTools MCP、某个 Edge 页面控制扩展和自有 Userscript Bridge 都不�
 
 DevTools MCP 和自有 bridge 不共享权限、页面 ID、Cookie、扩展状态或脚本状态：DevTools MCP 能观察页面，不代表能写 userscript；自有 bridge 能写脚本，也不代表页面已重新加载或行为已验证。
 
+### 可选 js-reverse-mcp
+
+`js-reverse-mcp` 是实际的 MCP Server，不是 `chrome-devtools-mcp` 的文档扩展。它适合在普通 DevTools MCP 缺少运行时断点能力时使用，提供脚本源码检索、文本/XHR 断点、暂停调用栈和作用域、单步、请求发起栈以及 WebSocket 工具。它不提供 `chrome-devtools-mcp` 的完整 Performance Trace、Lighthouse、Heap Snapshot、扩展/PWA 和丰富页面交互能力，因此不能作为默认替代品。
+
+使用前读取 [js-reverse-mcp.md](js-reverse-mcp.md)，并按当前 npm 版本重新检查 CLI：
+
+```bash
+npm view js-reverse-mcp version
+npm exec --yes --package=js-reverse-mcp@4.0.5 -- js-reverse-mcp --help
+```
+
+`4.0.5` 是本次调查核对的版本示例；如果 `npm view` 返回了新版本，先重新核对参数和工具集合，再更新锁定版本。
+
+要连接真实 Edge，使用 Edge 的 CDP HTTP 端点并先验证 `/json/version`；推荐独立 profile 和 `--allowedRoots` 专用分析目录。`--cloak` 是独立浏览器模式，不能和 `--browserUrl` 一起作为 Edge 连接方案。
+
+同一目标页面只选择一个调试控制器：
+
+```text
+DOM/Performance/Memory/扩展能力 → chrome-devtools-mcp
+源码断点/调用栈/单步/WebSocket → js-reverse-mcp
+```
+
+不要为同一个页面同时启动两个 debugger 控制链；切换时先结束当前调试会话，再重新枚举页面并执行无副作用检查。该 MCP 的安装、注册和启动不属于默认初始化动作。
+
 ## 调试证据入口
 
 页面问题按需读取：
 
 - Codex 内置浏览器操作：`browser-runtime.md`
 - Chromium DevTools MCP：`devtools-mcp.md`
+- JS 逆向/运行时断点：`js-reverse-mcp.md`
 - 通用 DOM/Console/Network/Performance 顺序：`browser-debugging.md`
 
 DevTools MCP 的版本、参数和可用工具必须以当前运行时的 `--version`、`--help`、`list_pages` 和无副作用 `evaluate_script` 为准。不得把自有 bridge 的 CLI 命令冒充 DevTools 命令，也不得把 DevTools 取证冒充 userscript 写入。

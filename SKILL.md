@@ -17,6 +17,7 @@ description: "专门开发、调试、测试和发布浏览器 userscript；仅�
 - **下载/导入**：保存和审查外部脚本，不把来源自动当成可信代码。
 - **发布**：从已验证的本地源码生成 userscript 发布文件；不默认产出扩展目录或扩展 ZIP。
 - **已安装脚本同步**：通过自有 Userscript Bridge 的 CLI（或其可选适配）读取、备份、差异比较，并在授权后更新 Tampermonkey 中的脚本。
+- **可选 JS 逆向/运行时深度调试**：仅当普通 DevTools 证据不足、用户明确需要混淆代码定位、运行时断点、调用栈或单步调试时，按需使用 `js-reverse-mcp`；见 `references/js-reverse-mcp.md`。它不是默认初始化工具，也不替代常规 `chrome-devtools-mcp`。
 - **可选扩展迁移**：仅当用户明确要求迁移为 Edge/Chrome 扩展时，分析本地 `.user.js` 并按需生成 MV3 适配；见 `references/userscript-to-extension.md`。
 
 如果用户的请求本身包含多个范围，可以在报告中写清楚当前阶段和交接点；不必为了“模式纯粹”阻止合理的连续工作。开发源码、下载审查副本、安装环境和发布 staging 仍应保持可区分，避免误覆盖。
@@ -95,6 +96,7 @@ description: "专门开发、调试、测试和发布浏览器 userscript；仅�
 | DOM、交互、SPA 生命周期 | userscript 专用测试、Edge + Tampermonkey 回归 | 内置浏览器 DOM/布局观察、DevTools 证据 |
 | 网络、CDN、图片/视频和预加载 | 相关行为测试、Edge 页面回归 | Network/Performance 基线 |
 | 闪烁、重排、内存问题 | 可复现测试、Edge 页面回归 | 内置浏览器布局观察、Performance/Memory 采样 |
+| 混淆脚本、加密/签名、运行时断点 | userscript 行为测试、Edge 页面回归 | 按需使用 `js-reverse-mcp` 的源码搜索、断点、调用栈和单步 |
 | 已安装脚本同步 | 自有 bridge `status/list/get`、备份、差异、回读 | 乐观锁、真实页面复测 |
 | userscript 发布 | metadata 检查、`node --check`、项目测试、`git diff --check` | 更新/下载地址可用性 |
 | 扩展迁移（仅明确要求时） | 独立的 Manifest、权限和构建检查 | Edge/Chrome 扩展加载验证 |
@@ -105,6 +107,7 @@ description: "专门开发、调试、测试和发布浏览器 userscript；仅�
 - **Edge + Tampermonkey**：userscript 的真实运行和页面行为验证环境；具体页面操作可使用当前可用的自动化工具或浏览器 UI。
 - **Codex 内置浏览器**：按需提供 DOM、快照、截图和用户可见布局观察；不代表真实 Edge 的 userscript 运行结果。
 - **Edge DevTools MCP/真实 DevTools**：按需获取页面 Console、Network、Performance、Memory 等深层证据。具体能力以当前安装版本和运行时帮助为准。
+- **可选 `js-reverse-mcp`**：按需获取加载脚本检索、源码保存、文本/XHR 断点、暂停作用域、调用栈、单步和 WebSocket 证据；它与 `chrome-devtools-mcp` 能力有重叠但不是完整替代，不能默认同时控制同一页面。
 - **自有 Userscript Bridge（扩展 + 本地 host/CLI）**：已安装 userscript 的读取、备份和授权写入；不替代页面调试。
 - **Greasy Fork MCP/网页检索**：公开脚本和资料发现；第三方代码仍需审查来源、许可证和行为。
 
@@ -133,6 +136,7 @@ description: "专门开发、调试、测试和发布浏览器 userscript；仅�
 - 通用浏览器调试：`references/browser-debugging.md`
 - Codex 内置浏览器：`references/browser-runtime.md`
 - 浏览器 DevTools MCP：`references/devtools-mcp.md`
+- JS 逆向/运行时深度调试（仅按需）：`references/js-reverse-mcp.md`
 - 生命周期和架构：`references/architecture-and-lifecycle.md`
 - 性能、CDN 和预加载：`references/performance-and-network.md`
 - Bug、回归和发布前检查：`references/bug-fix-and-regression.md`
